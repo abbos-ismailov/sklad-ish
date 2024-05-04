@@ -10,17 +10,17 @@ class XomashyoGetApiView(APIView):
     def post(self, request):
         data = request.data
         spending = [] ### bizga kerak mahsulotlar uchun list
-        result = []  ### Natija qaytarish uchun list
-        for i in data: ### Front-end dan kelgan datani yugurib chiqyapmiz
-            item = XomashyoMahsulot.objects.filter(mahsulot_id__kodi=i) ### mahsulotga qancha material ketishini bilish uchun
+        result = []
+        for i in data:
+            item = XomashyoMahsulot.objects.filter(mahsulot_id__kodi=i)
             for j in item:
                 obj = {
                     "xomashyo": j.xomashyo_id.id,
-                    "quantity_all": j.quantity * data[i], ### bitta mahsulotga ketadigan materialni * dik nechta mahsulot kerakligiga
+                    "quantity_all": j.quantity * data[i],
                     "mahsulot_id": j.mahsulot_id
                 }
-                spending.append(obj) ### spending listiga qoshamiz har birini
-            mahsulot = Mahsulot.objects.get(kodi=i) ### result uchun mahsulot namesini olib keldik
+                spending.append(obj)
+            mahsulot = Mahsulot.objects.get(kodi=i)
             result.append(
                 {
                     "product_name": mahsulot.name,
@@ -30,19 +30,19 @@ class XomashyoGetApiView(APIView):
             )
         xomashyolar = [] ### Xomashyolar uchun global list ochdik bazaga ozgartirish kirita olmaganimiz uchun
         for i in spending:
-            xomashyolar.append(i["xomashyo"]) ### bizga kerakli xomashyo id sini kirgazdik
-        xomashyolar = list(set(xomashyolar)) ### agar ikkita bir xil bolsa bittasini olib tashladik
+            xomashyolar.append(i["xomashyo"])
+        xomashyolar = list(set(xomashyolar))
 
         materiallar = {} ### Storedagi hamma bizga kerak bolgan material (ip) uchun dict
-        for i in xomashyolar: ### yaratilgan vaqtiga qarab agar ip kerak bolsa hamma iplarni olib kelamiz
+        for i in xomashyolar:
             materiallar[i] = Store.objects.filter(xomashyo_id__id = i).order_by("created_time")
 
 
         for i in spending:
-            mater = materiallar[i.get("xomashyo")] ### bu joyda ip kerak bolsa bazada hamma ipni list sifatida olib keladi
+            mater = materiallar[i.get("xomashyo")] ### qaysi xomashyo kerak bolsa bazadan hammasini list sifatida olib keladik
             for j in range(len(mater)):
-                if i["quantity_all"] < mater[j].remainder and mater[j].remainder and i["quantity_all"]: ### bizga kerak miqdor bilan bazada qolgan mahsulotni taqqoslayapmiz
-                    new_obj = { ### obj yaratib "product_materials": [] ga qoshamiz agar True bolsa
+                if i["quantity_all"] < mater[j].remainder and mater[j].remainder and i["quantity_all"]:
+                    new_obj = {
                         "warehouse_id": mater[j].id,
                         "material_name": mater[j].xomashyo_id.name,
                         "qty": i["quantity_all"],
@@ -57,11 +57,11 @@ class XomashyoGetApiView(APIView):
                         "qty": mater[j].remainder,
                         "price": mater[j].price
                     }
-                    i["quantity_all"] -= mater[j].remainder ### keraklicha olgandan keyin ayirdik
+                    i["quantity_all"] -= mater[j].remainder
                     mater[j].remainder = 0 ### bazada qolmaganini bilib turish uchun nolga tengladik
                 for n in result:
                     if n["product_name"] == i["mahsulot_id"].name and new_obj.get("qty"):
-                        n.get("product_materials").append(new_obj) ### "product_materials": [] ga qoshilyapti
+                        n.get("product_materials").append(new_obj)
                 
                 if i["quantity_all"] == 0:
                     break
