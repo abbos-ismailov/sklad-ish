@@ -1,9 +1,9 @@
 from django.urls import path
 from .views import (
-    XomashyoGetApiView
+    MaterialGetApiView
 )
 
 
 urlpatterns = [
-    path("material/", XomashyoGetApiView.as_view()),
+    path("material/", MaterialGetApiView.as_view()),
 ]
